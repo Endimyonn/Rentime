@@ -39,6 +39,10 @@ init -1000 python:
     #     Query should be any portion of the condition string of any branch of the desired If node
     # - "Menu":
     #     Query should be any portion of any choice of the desired Menu node
+    # - "Jump":
+    #     Query should be the target label (as string) of the Jump node
+    # - "Call":
+    #     Query should be the target label (as string) of the Call node
     def FindNode(baseNode, nodeType, query, exactMatch = False, subAvoid = None):
         iterNode = baseNode
         while iterNode != None and iterNode != subAvoid:
@@ -52,6 +56,14 @@ init -1000 python:
             
             if nodeType == "Python" and type(iterNode) == renpy.ast.Python:
                 if (exactMatch == True and iterNode.code.source == query) or (exactMatch == False and query in iterNode.code.source):
+                    return iterNode
+            
+            if nodeType == "Jump" and type(iterNode) == renpy.ast.Jump:
+                if (exactMatch == True and iterNode.target == query) or (exactMatch == False and query in iterNode.target):
+                    return iterNode
+            
+            if nodeType == "Call" and type(iterNode) == renpy.ast.Call:
+                if (exactMatch == True and iterNode.target == query) or (exactMatch == False and query in iterNode.target):
                     return iterNode
             
             if type(iterNode) == renpy.ast.If:
@@ -528,7 +540,7 @@ init -1501 python:
             pathIndex = len(renpy.config.gamedir) + len(self.dirPath) + 1
             for path, subdirectories, files in os.walk(os.path.join(renpy.config.gamedir, self.dirPath)):
                 for fileName in files:
-                    self.files.append((os.path.join(path, fileName)[pathIndex:].replace('\\', '/')).lstrip('/'))
+                    self.files.append(os.path.join(path, fileName)[pathIndex:].replace('\\', '/').lstrip('/'))
         
         def EvaluateCondition(self):
             result = renpy.python.py_eval(self.condition)
@@ -542,7 +554,7 @@ init -1501 python:
     # - priority (int): if multiple valid patches exist for the same base path, the one with the highest priority will be the only one applied.
     # - condition: a Python expression which must evaluate to a boolean. Determines whether the patch is valid at the time of consideration.
     def LayeredRen_AddFSPatch(dirPath, priority = 0, condition = "True"):
-        LayeredRen_FSPatches.append(LayeredRen_FSPatch(dirPath.lstrip('/').lstrip('\\'), priority, condition))
+        LayeredRen_FSPatches.append(LayeredRen_FSPatch(dirPath.replace('\\', '/').lstrip('/'), priority, condition))
     
     # A FilePatch allows a mod to have a file normally loaded by the game replaced with another.
     # Use LayeredRen_AddFilePatch() to create one.
@@ -654,7 +666,7 @@ init -1501 python:
                 if dirCandidate.replacementDirectory != "":
                     directory = dirCandidate.replacementDirectory
         
-        if Rentime_Compat_LayeredRen_LoadSignature == 0: # Ren'Py >= 7.6.0
+        if Rentime_Compat_LayeredRen_LoadSignature == 0: # Ren'Py >= 7.6.0 / 8.1.0
             return LayeredRen_LoadOrig(name, directory, tl)
         elif Rentime_Compat_LayeredRen_LoadSignature == 1: # Ren'Py >= 6.99.13
             return LayeredRen_LoadOrig(name, tl)

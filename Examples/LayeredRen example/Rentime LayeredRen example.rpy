@@ -1,7 +1,7 @@
 # This example demonstrates how to use LayeredRen to replace certain images in the game, without replacing them on disk.
 # This mod is only designed for the freeware version of Doki Doki Literature Club, and will not run on another game.
 # 
-# Inside the mod directory (in this case, it should be game/mods/LayeredRen example), we have a directory called "layer".
+# Inside the mod directory (in this case, it should be game/mods/Example/LayeredRen example), we have a directory called "layer".
 # Using LayeredRen, we will register this folder as a "layered game directory" by creating an FSPatch targeting "mods/Example/LayeredRen example/layer/".
 # A "layered game directory" will be considered to be literally a second "game" directory placed on top of the real one.
 # When the game requests a file to be loaded, LayeredRen intercepts this request to check the layered game directory to see if it has its own version of it.
