@@ -50,7 +50,7 @@ The primary driver behind its development was to enable the creation of mods in 
 LayeredRen is a component of Rentime. It allows mods to substitute most files with ones of their choice.  
 It works by altering file load requests prior to fulfillment, based on registered "patches".
 
-The primary intended use-case behined LayeredRen (much like its namesake, LayeredFS of the Luma3DS and Atmosphère CFWs) is game asset substitution -- replacing images, videos, audio, etc..
+The main use for LayeredRen (much like its namesake, LayeredFS of the Luma3DS and Atmosphère CFWs) is game asset substitution -- replacing images, videos, audio, etc..
 
 LayeredRen offers three ways to substitute files:
 - **FSPatches** allow mods to designate a directory as a "layered game directory", where it is treated as an alternative version of the "game" directory, and any files whose path inside it matches a "game" directory file's path will be loaded over that file.
@@ -120,4 +120,4 @@ Pull requests are welcome.
 ## License
 Rentime is licensed under the Apache 2.0 license.  
 As such, you're mostly free to do whatever you want with it, as long as the notice header included at the top of `Rentime.rpy` remains unaltered.  
-See the "LICENSE" file or go [here](http://www.apache.org/licenses/LICENSE-2.0) for more info what you can and cannot do.
+See the "LICENSE" file or go [here](http://www.apache.org/licenses/LICENSE-2.0) for more info on what you can and cannot do.

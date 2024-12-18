@@ -43,6 +43,8 @@ init -1000 python:
     #     Query should be the target label (as string) of the Jump node
     # - "Call":
     #     Query should be the target label (as string) of the Call node
+    # - "While":
+    #     Query should be the condition of the loop
     def FindNode(baseNode, nodeType, query, exactMatch = False, subAvoid = None):
         iterNode = baseNode
         while iterNode != None and iterNode != subAvoid:
@@ -94,8 +96,11 @@ init -1000 python:
                         if checkBranch is not None:
                             return checkBranch
             
-            # Scan While loops
+            # Scan While nodes
             if type(iterNode) == renpy.ast.While:
+                if nodeType == "While":
+                    if (exactMatch == True and iterNode.condition == query) or (exactMatch == False and query in iterNode.condition):
+                        return iterNode
                 checkBranch = FindNode(iterNode.block[0], nodeType, query, exactMatch, iterNode.next)
                 if checkBranch is not None:
                     return checkBranch
