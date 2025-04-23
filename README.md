@@ -82,10 +82,10 @@ Given the wide range of versions Rentime targets, it is difficult to test on all
 ### Platforms
 **Windows** is supported.  
 **Linux** is supported.  
-**MacOS** is supported, but untested (I don't own one).  
-**Android** is untested. Newer OS versions block access to the `game` directory used for installation. Some features are likely nonfunctional.  
-**iOS** is untested. Some features are likely nonfunctional.  
-**Consoles** are nigh-untestable, but should work fine if you can get it installed.  
+**MacOS** is supported, but untested because I don't own a device running it.  
+**Android** is supported. However, newer OS versions (13 and up) mostly block access to the `game` directory used for installation. LayeredRen is untested.  
+**iOS** is nigh-untestable. Some features are likely nonfunctional.  
+**Consoles** are nigh-untestable, but should work fine in theory if you can get it installed.  
 **Web/HTML5** is unsupported.
 
 
