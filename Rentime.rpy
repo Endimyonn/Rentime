@@ -1,4 +1,4 @@
-# Copyright 2024 Endimyonn (https://github.com/Endimyonn)
+# Copyright 2025 Endimyonn (https://github.com/Endimyonn)
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -417,8 +417,13 @@ init -1000 python:
                                 FoundGoal(branchItem, branch)
                 elif goal == "IfCond" and type(branchItem) is renpy.sl2.slast.SLIf:
                     for ifEntry in branchItem.entries:
-                        if ifEntry[0] == targetCond or (storage["containing"] == True and targetCond in ifEntry[0]):
+                        if ifEntry[0] == targetCond:
                             FoundGoal(branchItem, branch)
+                        elif storage["containing"] == True:
+                            if ifEntry[0] == None and targetCond in ("", "None"):
+                                FoundGoal(branchItem, branch)
+                            elif ifEntry[0] != None and targetCond in ifEntry[0]:
+                                FoundGoal(branchItem, branch)
                 elif goal == "DispName" and type(branchItem) is renpy.sl2.slast.SLDisplayable:
                     if branchItem.name == targetDisplayable:
                         FoundGoal(branchItem, branch)
@@ -451,9 +456,15 @@ init -1000 python:
         newAST = renpy.game.script.load_string("Rentime.rpy", rawRpy)[1]
         if newAST == None:
             raise Exception("The provided script block could not be interpreted correctly. Check for script errors in it.")
-        renpy.display.screen.screens[newAST[0][1].name[0], variant] = newAST[0][1]
-        renpy.display.screen.screens_by_name[newAST[0][1].name[0]][variant] = newAST[0][1]
-        return newAST[0][1]
+        
+        if Rentime_Compat_MakeScreenType == 1:
+            renpy.display.screen.screens[newAST[0][1].name[0], variant] = newAST[0][1]
+            renpy.display.screen.screens_by_name[newAST[0][1].name[0]][variant] = newAST[0][1]
+            return newAST[0][1]
+        elif Rentime_Compat_MakeScreenType == 2:
+            renpy.display.screen.screens[newAST[0][1].block[0].name[0], variant] = newAST[0][1].block[0]
+            renpy.display.screen.screens_by_name[newAST[0][1].block[0].name[0]][variant] = newAST[0][1].block[0]
+            return newAST[0][1].block[0]
     
     # Places arbitrary screen code at the specified index of a screen or displayable object
     def InsertScreenCode(recipient, rawRpy, index = 0):
@@ -467,7 +478,12 @@ init -1000 python:
         if index < 0:
             index = len(recipient.children) + (index + 1)
         
-        newAST = renpy.game.script.load_string("Rentime.rpy", "screen insertScreen():\n    " + rawRpy)[1][0][1].screen.children
+        newAST = renpy.game.script.load_string("Rentime.rpy", "screen insertScreen():\n    " + rawRpy)[1][0][1]
+        if Rentime_Compat_MakeScreenType == 1:
+            newAST = newAST.screen.children
+        elif Rentime_Compat_MakeScreenType == 2:
+            newAST = newAST.block[0].screen.children
+        
         recipient.children = recipient.children[0:index] + newAST + recipient.children[index:]
     
     # Places a "use" statement at the beginning of another screen/screen block, to embed a desired screen.
@@ -671,7 +687,7 @@ init -1501 python:
                 if dirCandidate.replacementDirectory != "":
                     directory = dirCandidate.replacementDirectory
         
-        if Rentime_Compat_LayeredRen_LoadSignature == 0: # Ren'Py >= 7.6.0 / 8.1.0
+        if Rentime_Compat_LayeredRen_LoadSignature == 0: # Ren'Py >= 7.6.0
             return LayeredRen_LoadOrig(name, directory, tl)
         elif Rentime_Compat_LayeredRen_LoadSignature == 1: # Ren'Py >= 6.99.13
             return LayeredRen_LoadOrig(name, tl)
@@ -705,11 +721,16 @@ init -1510 python:
     
     # Version support helpers
     Rentime_Compat_HasTranslateSay = hasattr(renpy.ast, "TranslateSay")
-    Rentime_Compat_LayeredRen_LoadSignature = 0
-    Rentime_Compat_MenuIArgs = "item_arguments" in renpy.ast.Menu.__slots__
+    Rentime_Compat_MenuIArgs = hasattr(renpy.ast.Menu, "item_arguments")
     Rentime_Compat_DisplayableName = renpy.version_only >= "8.0"
     Rentime_Compat_MenuCaption = renpy.version_only >= "7.3.3"
     
+    Rentime_Compat_MakeScreenType = 1
+    Rentime_Compat_MakeScreenType_Tester = renpy.game.script.load_string("Rentime.rpy", "screen MakeScreenTypeTester():\n    text 'test'")
+    if hasattr(Rentime_Compat_MakeScreenType_Tester[1][0][1], "block") == True:
+        Rentime_Compat_MakeScreenType = 2
+    
+    Rentime_Compat_LayeredRen_LoadSignature = 0
     if sys.version_info.major == 2:
         # Rentime_Compat_LayeredRen_LoadSignature
         if "directory" not in renpy.loader.load.func_code.co_varnames:
@@ -726,4 +747,4 @@ init -1510 python:
     #############
     # Declare mod
     #############
-    Rentime_version = "1.0.0"
+    Rentime_version = "1.1.0"
