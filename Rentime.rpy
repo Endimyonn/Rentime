@@ -65,7 +65,7 @@ init -1000 python:
                     return iterNode
             
             if nodeType == "Call" and type(iterNode) == renpy.ast.Call:
-                if (exactMatch == True and iterNode.target == query) or (exactMatch == False and query in iterNode.target):
+                if (exactMatch == True and iterNode.label == query) or (exactMatch == False and query in iterNode.label):
                     return iterNode
             
             if type(iterNode) == renpy.ast.If:
@@ -110,6 +110,12 @@ init -1000 python:
                 checkBranch = FindNode(iterNode.block[0], nodeType, query, exactMatch, iterNode.next)
                 if checkBranch is not None:
                     return checkBranch
+            
+            # Scan UserStatements
+            if type(iterNode) == renpy.ast.UserStatement:
+                if nodeType == "Call" and iterNode.parsed[0][0] == "call":
+                    if (exactMatch == True and iterNode.parsed[1]["name"] == query) or (exactMatch == False and query in iterNode.parsed[1]["name"]):
+                        return iterNode
             
             # Check the next node
             iterNode = iterNode.next
@@ -309,6 +315,7 @@ init -1000 python:
     # 'result' should be an AST block
     def InsertIfBranch(ifNode, index, condition, result):
         ifNode.entries.insert(index, (condition, result))
+        result[-1].next = ifNode.next
     
     # Replaces the condition of an If node's branch
     # 'newCondition' should be a string that evaluates to True/False
@@ -641,8 +648,7 @@ init -1501 python:
     LayeredRen_FilePatches = []
     LayeredRen_DirPatches = []
     
-    # Hooks Ren'Py's file-load function to apply patches
-    def LayeredRen_LoadPrefix(name, directory = None, tl = True):
+    def LayeredRen_LoadPatchCommon(name, directory, tl):
         # Perform leading-slash-strip early
         name = name.lstrip('/')
         
@@ -687,16 +693,35 @@ init -1501 python:
                 if dirCandidate.replacementDirectory != "":
                     directory = dirCandidate.replacementDirectory
         
+        return (name, directory, tl)
+    
+    def LayeredRen_LoadPrefix(name, directory = None, tl = True):
+        pName, pDir, pTL = LayeredRen_LoadPatchCommon(name, directory, tl)
+        
         if Rentime_Compat_LayeredRen_LoadSignature == 0: # Ren'Py >= 7.6.0
-            return LayeredRen_LoadOrig(name, directory, tl)
+            return LayeredRen_LoadOrig(pName, pDir, pTL)
         elif Rentime_Compat_LayeredRen_LoadSignature == 1: # Ren'Py >= 6.99.13
-            return LayeredRen_LoadOrig(name, tl)
+            return LayeredRen_LoadOrig(pName, pTL)
         elif Rentime_Compat_LayeredRen_LoadSignature == 2:
-            return LayeredRen_LoadOrig(name)
+            return LayeredRen_LoadOrig(pName)
         else:
             raise Exception("Rentime: Unhandled signature for renpy.loader.load! Please report this.")
     LayeredRen_LoadOrig = renpy.loader.load
     renpy.loader.load = LayeredRen_LoadPrefix
+    
+    def LayeredRen_LoadablePrefix(name, tl = True, directory = None):
+        pName, pDir, pTL = LayeredRen_LoadPatchCommon(name, directory, tl)
+        
+        if Rentime_Compat_LayeredRen_LoadableSignature == 0:
+            return LayeredRen_LoadableOrig(pName, pTL, pDir)
+        elif Rentime_Compat_LayeredRen_LoadableSignature == 1:
+            return LayeredRen_LoadableOrig(pName, pTL)
+        elif Rentime_Compat_LayeredRen_LoadableSignature == 2:
+            return LayeredRen_LoadableOrig(pName)
+        else:
+            raise Exception("Rentime: Unhandled signature for renpy.loader.loadable! Please report this.")
+    LayeredRen_LoadableOrig = renpy.loader.loadable
+    renpy.loader.loadable = LayeredRen_LoadablePrefix
     
     # Hooks the live-reload function to undo hooks prior to a reload. This is necessary as reloading does not reset modifications to engine internals.
     def LayeredRen_ReloadPrefix():
@@ -732,17 +757,27 @@ init -1510 python:
     
     Rentime_Compat_LayeredRen_LoadSignature = 0
     if sys.version_info.major == 2:
-        # Rentime_Compat_LayeredRen_LoadSignature
         if "directory" not in renpy.loader.load.func_code.co_varnames:
             Rentime_Compat_LayeredRen_LoadSignature += 1
             if "tl" not in renpy.loader.load.func_code.co_varnames:
                 Rentime_Compat_LayeredRen_LoadSignature += 1
     elif sys.version_info.major == 3:
-        # Rentime_Compat_LayeredRen_LoadSignature
         if "directory" not in renpy.loader.load.__code__.co_varnames:
             Rentime_Compat_LayeredRen_LoadSignature += 1
             if "tl" not in renpy.loader.load.__code__.co_varnames:
                 Rentime_Compat_LayeredRen_LoadSignature += 1
+    
+    Rentime_Compat_LayeredRen_LoadableSignature = 0
+    if sys.version_info.major == 2:
+        if "tl" not in renpy.loader.loadable.func_code.co_varnames:
+            Rentime_Compat_LayeredRen_LoadableSignature += 1
+            if "directory" not in renpy.loader.loadable.func_code.co_varnames:
+                Rentime_Compat_LayeredRen_LoadableSignature += 1
+    elif sys.version_info.major == 3:
+        if "tl" not in renpy.loader.loadable.__code__.co_varnames:
+            Rentime_Compat_LayeredRen_LoadableSignature += 1
+            if "directory" not in renpy.loader.loadable.__code__.co_varnames:
+                Rentime_Compat_LayeredRen_LoadableSignature += 1
     
     #############
     # Declare mod
