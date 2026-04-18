@@ -582,7 +582,10 @@ init -1501 python:
     # - priority (int): if multiple valid patches exist for the same base path, the one with the highest priority will be the only one applied.
     # - condition: a Python expression which must evaluate to a boolean. Determines whether the patch is valid at the time of consideration.
     def LayeredRen_AddFSPatch(dirPath, priority = 0, condition = "True"):
-        LayeredRen_FSPatches.append(LayeredRen_FSPatch(dirPath.replace('\\', '/').lstrip('/'), priority, condition))
+        dirPath = dirPath.replace('\\', '/').lstrip('/')
+        if dirPath[-1] != '/':
+            dirPath += '/'
+        LayeredRen_FSPatches.append(LayeredRen_FSPatch(dirPath, priority, condition))
     
     # A FilePatch allows a mod to have a file normally loaded by the game replaced with another.
     # Use LayeredRen_AddFilePatch() to create one.
@@ -715,7 +718,7 @@ init -1501 python:
         if Rentime_Compat_LayeredRen_LoadableSignature == 0:
             return LayeredRen_LoadableOrig(pName, pTL, pDir)
         elif Rentime_Compat_LayeredRen_LoadableSignature == 1:
-            return LayeredRen_LoadableOrig(pName, pTL)
+            return LayeredRen_LoadableOrig(pName, pDir)
         elif Rentime_Compat_LayeredRen_LoadableSignature == 2:
             return LayeredRen_LoadableOrig(pName)
         else:
@@ -725,9 +728,11 @@ init -1501 python:
     
     # Hooks the live-reload function to undo hooks prior to a reload. This is necessary as reloading does not reset modifications to engine internals.
     def LayeredRen_ReloadPrefix():
-        # Remove load hook
+        # Remove load hooks
         global LayeredRen_LoadOrig
+        global LayeredRen_LoadableOrig
         renpy.loader.load = LayeredRen_LoadOrig
+        renpy.loader.loadable = LayeredRen_LoadableOrig
         
         # Remove this hook
         global LayeredRen_ReloadOrig
@@ -782,4 +787,4 @@ init -1510 python:
     #############
     # Declare mod
     #############
-    Rentime_version = "1.1.0"
+    Rentime_version = "1.1.2"
