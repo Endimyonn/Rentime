@@ -726,6 +726,21 @@ init -1501 python:
     LayeredRen_LoadableOrig = renpy.loader.loadable
     renpy.loader.loadable = LayeredRen_LoadablePrefix
     
+    def LayeredRen_ListFilesPostfix(common = False):
+        result = LayeredRen_ListFilesOrig(common)
+        
+        for fsPatch in LayeredRen_FSPatches:
+            if fsPatch.EvaluateCondition() == True:
+                for fileName in fsPatch.files:
+                    result.append(fileName)
+        for filePatch in LayeredRen_FilePatches:
+            if filePatch.EvaluateCondition() == True:
+                result.append(filePatch.targetPath)
+        
+        return result
+    LayeredRen_ListFilesOrig = renpy.list_files
+    renpy.list_files = LayeredRen_ListFilesPostfix
+    
     # Hooks the live-reload function to undo hooks prior to a reload. This is necessary as reloading does not reset modifications to engine internals.
     def LayeredRen_ReloadPrefix():
         # Remove load hooks
@@ -787,4 +802,4 @@ init -1510 python:
     #############
     # Declare mod
     #############
-    Rentime_version = "1.1.2"
+    Rentime_version = "1.1.3"
